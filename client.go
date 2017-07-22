@@ -1,11 +1,10 @@
-package main
+package redisclient
 
 import (
 	"net/http"
 	"time"
 	"encoding/json"
 	"bytes"
-	"io"
 	"strings"
 	"strconv"
 	"errors"
@@ -16,7 +15,7 @@ type Client struct {
 	httpClient http.Client
 }
 
-func newClient(url string) *Client {
+func NewClient(url string) *Client {
 
 	if strings.HasSuffix(url, "/") == false {
 		url += "/"
@@ -25,48 +24,91 @@ func newClient(url string) *Client {
 	return &Client{url, http.Client{Timeout: time.Second * 2}}
 }
 
-func (c *Client) keys() ([]interface{}, error) {
+func (c *Client) Keys() ([]string, error) {
 
 	respValue, err := c.httpCall(http.MethodGet, c.url+"keys", nil)
+	keys := respValue["keys"].([]interface{})
 
-	return respValue["keys"].([]interface{}), err
+	result := make([]string, len(keys))
+	for i := range keys {
+		result[i] = keys[i].(string)
+	}
+
+	return result, err
 }
 
-func (c *Client) get(key string) (interface{}, error) {
+func (c *Client) Get(key string) (interface{}, error) {
 
 	respValue, err := c.httpCall(http.MethodGet, c.url + "values/" + key,  nil)
 
 	return respValue["value"], err
 }
 
-func (c *Client) getListElement(key string, pos int) (interface{}, error) {
+func (c *Client) GetTtl(key string) (interface{}, error) {
+
+	respValue, err := c.httpCall(http.MethodGet, c.url + "ttl/" + key,  nil)
+
+	return respValue["value"], err
+}
+
+func (c *Client) GetListElement(key string, pos int) (interface{}, error) {
 
 	respValue, err := c.httpCall(http.MethodGet, c.url + "values/" + key + "?pos=" + strconv.Itoa(pos),  nil)
 
 	return respValue["value"], err
 }
 
-func (c *Client) getDictValue(key string, dictKey string) (interface{}, error) {
+func (c *Client) GetDictValue(key string, dictKey string) (interface{}, error) {
 
 	respValue, err := c.httpCall(http.MethodGet, c.url + "values/" + key + "?key=" + dictKey,  nil)
 
 	return respValue["value"], err
 }
 
-func (c *Client) put(key string, value interface{}) (interface{}, error) {
+func (c *Client) Put(key string, value interface{}) (interface{}, error) {
+
+	return c.httpCall(http.MethodPut, c.url + "values/" + key,  value)
+}
+
+func (c *Client) PutWithExpire(key string, value interface{}, expire int) (interface{}, error) {
+
+	return c.httpCall(http.MethodPut, c.url + "values/" + key + "?expire=" + strconv.Itoa(expire),  value)
+}
+
+func (c *Client) Expire(key string, expire int) (interface{}, error) {
+
+	return c.httpCall(http.MethodPut, c.url + "expire/" + key,  expire)
+}
+
+func (c *Client) Delete(key string) (interface{}, error) {
+
+	respValue, err := c.httpCall(http.MethodDelete, c.url + "values/" + key, nil)
+
+	return respValue["value"], err
+}
+
+func (c *Client) Persist() (interface{}, error) {
+
+	respValue, err := c.httpCall(http.MethodPost, c.url + "persist", nil)
+
+	return respValue["value"], err
+}
+
+func (c *Client) Reload() (interface{}, error) {
+
+	respValue, err := c.httpCall(http.MethodPost, c.url + "reload", nil)
+
+	return respValue["value"], err
+}
+
+func (c *Client) httpCall(method, url string, value interface{}) (map[string]interface{}, error) {
+
+	var respValue map[string]interface{}
 
 	b := new(bytes.Buffer)
 	json.NewEncoder(b).Encode(value)
 
-	respValue, err := c.httpCall(http.MethodPut, c.url + "values/" + key,  b)
-
-	return respValue, err
-}
-
-func (c *Client) httpCall(method, url string, body io.Reader) (map[string]interface{}, error) {
-
-	var respValue map[string]interface{}
-	req, err := http.NewRequest(method, url,  body)
+	req, err := http.NewRequest(method, url,  b)
 	if err == nil {
 		req.Header.Set("Content-Type", "application/json")
 
