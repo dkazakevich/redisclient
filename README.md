@@ -29,13 +29,12 @@ This example shows how to use redisclient.
 import (
 	"github.com/dkazakevich/redisclient"
 	"log"
+	"fmt"
 )
 
 func main() {
 
-	var client *redisclient.Client
-
-	client = redisclient.New("http://localhost:8080/api/v1/")
+	client := redisclient.New("http://localhost:8081/api/v1/")
 
 	err := client.Connect()
 
@@ -43,38 +42,50 @@ func main() {
 		log.Fatalf("Connect failed: %s\n", err.Error())
 	}
 
-	log.Println("Connected to the redis server.")
+	fmt.Println("Connected to the redis server.")
 
+	fmt.Println("================ Put and get string ================")
 	client.PutWithExpire("hello", "Hello world!", 10)
-	printPair(client.Get("hello"))
+	printResult(client.Get("hello"))
 
+	fmt.Println("================ Put and get list ==================")
 	client.Put("list", [6]int{2, 3, 5, 7, 11, 13})
-	printPair(client.Get("list"))
-	printPair(client.GetListElement("list", 0))
+	printResult(client.Get("list"))
+	printResult(client.GetListElement("list", 0))
 
+	fmt.Println("================ Put and get dictionary ============")
 	client.Put("planets", map[string]string{"planet1": "Mercury", "planet2": "Venus", "planet3": "Earth"})
-	printPair(client.Get("planets"))
-	printPair(client.GetDictValue("planets", "planet3"))
-	printPair(client.GetDictValue("planets", "planet4"))
+	printResult(client.Get("planets"))
+	printResult(client.GetDictValue("planets", "planet3"))
+	printResult(client.GetDictValue("planets", "planet4"))
 
-	printPair(client.Keys())
+	fmt.Println("================ Cache keys ========================")
+	printResult(client.Keys())
 
-	printPair(client.Delete("planets"))
-	printPair(client.Keys())
+	fmt.Println("================ Delete 'planets' ==================")
+	printResult(client.Delete("planets"))
 
-	printPair(client.GetTtl("hello"))
-	printPair(client.GetTtl("list"))
+	fmt.Println("================ Cache keys ========================")
+	printResult(client.Keys())
 
-	printPair(client.Expire("list", 10))
+	fmt.Println("================ Get 'hello' ttl  ==================")
+	printResult(client.GetTtl("hello"))
 
-	client.Persist()
+	fmt.Println("================ Get 'nonExistent' ttl  ============")
+	printResult(client.GetTtl("nonExistent"))
+
+	fmt.Println("================ Set 'hello' expire  ===============")
+	printResult(client.Expire("hello", 10))
+
+	fmt.Println("================ Persist cache data  ================")
+	printResult(client.Persist())
 }
 
-func printPair(value interface{}, err error) {
+func printResult(value interface{}, err error) {
 	if err == nil {
-		log.Printf("Value: '%v'\n", value)
+		fmt.Printf("Value: '%v'\n", value)
 	} else {
-		log.Printf("Error: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 	}
 }
 ```
