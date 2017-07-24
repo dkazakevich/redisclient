@@ -1,6 +1,6 @@
 # Client for the Redis-like in-memory cache
 
-##Installation and upgrade
+## Installation and upgrade
 
 ```
     # Use 'go get' to install or upgrade (-u) the redis package
@@ -30,7 +30,7 @@ var client *redisclient.Client
 	
 client = redisclient.New("http://localhost:8080/api/v1/")
 
-err := client.Connect(host, port)
+err := client.Connect()
 
 if err != nil {
   log.Fatalf("Connect failed: %s\n", err.Error())
