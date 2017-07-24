@@ -140,6 +140,10 @@ func TestPutAndGetPerformance(t *testing.T) {
 	keys, _ := client.Keys()
 	log.Printf("Keys size: %v", len(keys))
 
+	for i := range keys {
+		client.Delete(keys[i])
+	}
+
 	elapsed := time.Since(start)
 	log.Printf("%v times put and get took %v", performanceIterations, elapsed)
 }

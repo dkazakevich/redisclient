@@ -6,7 +6,7 @@
     # Use 'go get' to install or upgrade (-u) the redis package
     go get -u github.com/dkazakevich/redisclient
     
-    # Use `go test` to run tests
+    # Use `go test` to run tests (the server should be run for it)
     go test github.com/dkazakevich/redisclient
 ```
 
