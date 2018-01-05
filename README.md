@@ -26,22 +26,20 @@ to interact with a redis server.
 This example shows how to use redisclient.
 
 ```go
+package main
+
 import (
-	"github.com/dkazakevich/redisclient"
 	"log"
 	"fmt"
+	"github.com/dkazakevich/redisclient"
 )
 
 func main() {
-
-	client := redisclient.New("http://localhost:8081/api/v1/")
-
+	client := redisclient.New("http://localhost:8080/api/v1/")
 	err := client.Connect()
-
 	if err != nil {
 		log.Fatalf("Connect failed: %s\n", err.Error())
 	}
-
 	fmt.Println("Connected to the redis server.")
 
 	fmt.Println("================ Put and get string ================")

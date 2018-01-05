@@ -50,11 +50,14 @@ func (c *Client) PutWithExpire(key string, value interface{}, expire int) (inter
 
 //get list of cache keys
 func (c *Client) Keys() ([]string, error) {
+	var result []string
 	respValue, err := c.httpCall(http.MethodGet, c.url + "keys", nil)
-	keys := respValue.([]interface{})
-	result := make([]string, len(keys))
-	for i := range keys {
-		result[i] = keys[i].(string)
+	if err == nil {
+		keys := respValue.([]interface{})
+		result = make([]string, len(keys))
+		for i := range keys {
+			result[i] = keys[i].(string)
+		}
 	}
 	return result, err
 }
@@ -85,7 +88,7 @@ func (c *Client) Expire(key string, expire int) (interface{}, error) {
 func (c *Client) GetTtl(key string) (int, error) {
 	var ttl int
 	resp, err := c.httpCall(http.MethodGet, c.url + "ttl/" + key,  nil)
-	if resp != nil {
+	if (err == nil) && (resp != nil) {
 		ttl = int(resp.(float64))
 	}
 	return ttl, err
@@ -109,7 +112,9 @@ func (c *Client) Reload() (interface{}, error) {
 func (c *Client) httpCall(method, url string, value interface{}) (interface{}, error) {
 	var result interface{}
 	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(value)
+	if value != nil {
+		json.NewEncoder(b).Encode(value)
+	}
 	req, err := http.NewRequest(method, url,  b)
 	if err == nil {
 		req.Header.Set("Content-Type", "application/json")

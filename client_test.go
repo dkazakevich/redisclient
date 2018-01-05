@@ -10,12 +10,11 @@ import (
 	"math/rand"
 )
 
-const performanceIterations  = 10000
+const performanceIterations  = 1000
 const stringKey = "sixthMonth"
 const dictKey = "planets"
 const listKey = "cars"
 const nonExistentKey = "nonExistent"
-
 const itemNotFoundMsg = "Cache item not found"
 
 var client *Client
@@ -93,8 +92,9 @@ func TestNonExistentExpire(t *testing.T) {
 }
 
 func TestPersistItemTtl(t *testing.T) {
-	_, err := client.GetTtl(dictKey)
-	assertEquals(t, itemNotFoundMsg, err.Error())
+	ttl, err := client.GetTtl(dictKey)
+	assertEquals(t, nil, err)
+	assertEquals(t, -1, ttl)
 }
 
 func TestNonExistentTtl(t *testing.T) {
@@ -105,7 +105,7 @@ func TestNonExistentTtl(t *testing.T) {
 func TestPutAndGetPerformance(t *testing.T) {
 	data := make([]string, performanceIterations)
 	for i := range data {
-		data[i] = stringKey + strconv.Itoa(rand.Intn(1000))
+		data[i] = stringKey + /*strconv.Itoa(i)//*/strconv.Itoa(rand.Intn(performanceIterations))
 	}
 
 	start := time.Now()
@@ -116,15 +116,22 @@ func TestPutAndGetPerformance(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			client.PutWithExpire(value, value, rand.Intn(10))
-			client.Get(stringKey + strconv.Itoa(i))
+			_, err := client.Get(value)
+			if err != nil {
+				t.Fatalf("Error in process of get: '%v'", err)
+			}
 		}()
 	}
 	wg.Wait()
 
-	keys, _ := client.Keys()
-	log.Printf("Keys size: %v", len(keys))
-	for i := range keys {
-		client.Delete(keys[i])
+	keys, err := client.Keys()
+	if err != nil {
+		t.Fatalf("Error in process of get keys: '%v'", err)
+	} else {
+		log.Printf("Keys size: %v", len(keys))
+		for i := range keys {
+			client.Delete(keys[i])
+		}
 	}
 
 	elapsed := time.Since(start)
