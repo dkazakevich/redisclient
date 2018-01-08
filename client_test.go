@@ -124,18 +124,19 @@ func TestPutAndGetPerformance(t *testing.T) {
 	}
 	wg.Wait()
 
+	elapsed := time.Since(start)
+	log.Printf("%v times put and get took %v", performanceIterations, elapsed)
+
 	keys, err := client.Keys()
 	if err != nil {
 		t.Fatalf("Error in process of get keys: '%v'", err)
 	} else {
-		log.Printf("Keys size: %v", len(keys))
 		for i := range keys {
 			client.Delete(keys[i])
 		}
+		keys, _ = client.Keys()
+		assertEquals(t, 0, len(keys))
 	}
-
-	elapsed := time.Since(start)
-	log.Printf("%v times put and get took %v", performanceIterations, elapsed)
 }
 
 func assertEquals(t *testing.T, expected interface{}, actual interface{}) {
